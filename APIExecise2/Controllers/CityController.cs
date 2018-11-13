@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using APIExecise2.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APIExecise2.Controllers
@@ -19,6 +22,7 @@ namespace APIExecise2.Controllers
             _db = db;
         }
 
+        //[Produces("application/XML")]
         [HttpGet]
         [Route("")]
         public List<CityDTO> GetAll()
@@ -78,6 +82,40 @@ namespace APIExecise2.Controllers
             _db.SaveChanges();
         }
 
+        [HttpPost]
+        [Route("CreateAttraction")] //{id:int}
+        public void CreateAttraction([FromBody]Attraction value)
+        {
+            _db.Attractions.Add(value);
+            _db.SaveChanges();
+        }
+
+        //[AcceptVerbs("PUT", "PATCH"]
+        [HttpPut]
+        [Route("{id:int}")]
+        public void PutCity(int id, [FromBody]City value) //string name, string description
+        {
+            City city = _db.Cities.First(x => x.Id == id);
+            city.Name = value.Name;
+            city.Description = value.Description;
+            _db.SaveChanges();
+        }
+
+        //[AcceptVerbs("PATCH")]
+        [HttpPatch]
+        [Route("{id:int}")]
+        public City PatchCity(int id, [FromBody] JsonPatchDocument<City> jsonPatch) //Enable CORS and Allow: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH
+                                        //[FromBody] City value
+        {
+            City city = _db.Cities.First(x => x.Id == id);
+            //jsonPatch.Replace()
+            return city;
+            //_db.SaveChanges();
+
+            //city.Name = value.Name;
+            //city.Description = value.Description;
+        }
+
         [HttpDelete]
         [Route("{id:int}")]
         public void DeleteCity(int id)
@@ -86,12 +124,10 @@ namespace APIExecise2.Controllers
             _db.Cities.Remove(city);
             _db.SaveChanges();
         }
+    }
 
-        [HttpPatch]
-        [Route("{id:int}")]
-        public void PatchCity([FromBody]City value, int id)
-        {
-            City city = _db.Cities.First(x => x.Id == id);
-        }
+    public interface IHttpActionResult
+    {
+        Task<HttpResponseMessage> ExecuteAsync(CancellationToken cancellationToken);
     }
 }
